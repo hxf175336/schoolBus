@@ -46,10 +46,11 @@ const controller = {
 						};
 						res.json(result);
 					} else {
-						res.cookie('userName', req.body.userName, {
+						res.cookie('userName', isExits.userName, {
 						    expires: new Date(Date.now() + 2592000000),
 						    httpOnly: false
 						});
+						
 						console.log(res.cookie);
 						result = {
 							'code': 0,
@@ -80,22 +81,30 @@ const controller = {
 				'passWord': req.body.passWord,
 				'userType': req.body.type,
 			});
-		let isExits = await proxyFindObject.getUserByPhone(req.body.phoneNumber);
-		console.log(isExits);
-		if (isExits != null) {
+		let isExitsPhone = await proxyFindObject.getUserByPhone(req.body.phoneNumber),
+			isExitsUser = await proxyFindObject.getUserByUserName(req.body.userName);
+		if (isExitsPhone != null) {
 			result = {
 				'code': 9999,
 				'status': 'failed',
-				'message': '手机号已注册,请登录'
+				'message': '手机号已注册'
 			};
 			res.json(result);
 		} else {
-			setUser.save(function(err) {
+			if (isExitsUser != null) {
+				result = {
+					'code': 9999,
+					'status': 'failed',
+					'message': '用户名已注册'
+				};
+				res.json(result);
+			} else {
+				setUser.save(function(err) {
 				if (err) {
 					result = {
 						'code': 9999,
 						'status': 'failed',
-						'message': '写入数据库失败'
+						'message': '数据出错'
 					};
 					res.json(result);
 				} else {
@@ -107,15 +116,26 @@ const controller = {
 					res.json(result);
 				}
 			})
+			}
 		}
 
 	},
 	getUserByUserName: async(req, res) => {
 		let isExits, result,
 			param = req.body;
-		isExits = await proxyFindObject.getUserRechargeList();
+		isExits = await proxyFindObject.getUserByUserName(param.userName);
+		if (isExits) {
+
+		} else {
+			result = {
+				'code': 9999,
+				'status': 'failed',
+				'message': '未检索到数据'
+			};
+			res.json(result);
+		}
 	},
-	
+
 }
 
 module.exports = controller

@@ -105,6 +105,7 @@ export default {
             iconClass: 'mintui mintui-success'
           });
           this.reset();
+          this.$router.replace('/login')
           
         } else {
           this.errorTip = res.message;
