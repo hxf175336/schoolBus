@@ -1,0 +1,99 @@
+.login-index {
+  .mint-header {
+    position: fixed;
+    width: 100%;
+    box-shadow: 0px 1px 4px #333;
+    z-index: 1;
+    top: 0;
+    height: 50px;
+  }
+  .logo {
+    padding: 45px;
+    display: flex;
+    margin-top: 50px;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+    background: white;
+    img {
+      height: 90px;
+      width: 90px;
+      border-radius: 45px;
+      animation: zoomIn 1.2s;
+    }
+  }
+  .sign-in {
+    position: relative;
+    .submit-button {
+      margin-top: 32px;
+      display: block;
+      width: 90%;
+      margin-left: 5%;
+    }
+    .mint-field-other {
+      top: auto;
+      right: 5%;
+      img {
+        width: 90px;
+        height: 40px;
+        border-radius: 5px;
+      }
+    }
+    .signup-link {
+      float: right;
+      font-size: 14px;
+      color: red;
+      position: relative;
+      right: 5%;
+      line-height: 32px;
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+    .mint-popup-2 {
+      width: 100%;
+      height: 50px;
+      text-align: center;
+      background-color: rgba(0,0,0,.7);
+      backface-visibility: hidden;
+      p {
+        color: #fff;
+      }
+    }
+
+  }
+  .mint-cell-text, .mint-field-core {
+    font-size: 14px;
+    padding-right: 24px;
+  }
+  .mint-cell-text {
+    margin-left: 32px;
+  }
+  .mint-field-core {
+    padding-left: 24px;
+  }
+  .mint-field-state {
+    width: 50%;
+  }
+  .mint-radiolist-label {
+    padding: 0 32px;
+    font-size: 14px;
+  }
+  .mint-field-state {
+    width: 0;
+
+  }
+
+  @keyframes zoomIn {
+    from {
+      opacity: 0;
+      transform: scale3d(.3, .3, .3);
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  .zoomIn {
+    animation-name: zoomIn;
+  }
+}
