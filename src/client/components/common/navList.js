@@ -18,8 +18,8 @@ export default {
     "name": "关于我们",
     "icon": "&#xe698;"
   }, {
-    "path": "/guide",
-    "name": "使用指南",
+    "path": "/personal",
+    "name": "个人设置",
     "icon": "&#xe604;"
   }],
   //其他路由

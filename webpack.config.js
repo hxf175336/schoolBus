@@ -55,7 +55,8 @@ module.exports = {
       'vue$': 'vue/dist/vue.common.js',
       assets: path.join(__dirname, './src/client/assets'),
       resource: path.join(__dirname, './src/client/resource'),
-      util: path.join(__dirname, './src/client/util')
+      util: path.join(__dirname, './src/client/util'),
+      filter: path.join(__dirname, './src/client/filter')
     }
   },
   devServer: {

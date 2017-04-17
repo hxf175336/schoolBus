@@ -9,12 +9,19 @@
 	    </mt-navbar>
 	    <mt-tab-container v-model="moneyTabs">
 	      <mt-tab-container-item id="1">
-	        <mt-cell v-for="item in rechargeList" :title="item.title" 
-	        :label="item.time" :value="item.content"></mt-cell>
+	        <div v-if="rechargeList.length > 0">
+	        	<mt-cell  v-for="item in rechargeList" :title="item.consumeType | consumeTitle" 
+	        		:label="item.updateTime" :value="item.consumeMoney + '元'">
+	        	</mt-cell>
+	        </div>
+	        <div v-else ><p class="tip">暂无记录</p></div>
 	      </mt-tab-container-item>
 	      <mt-tab-container-item id="2">
-	        <mt-cell v-for="item in consumeList" :title="item.title" 
-	        :label="item.time" :value="item.content"></mt-cell>
+	        <div v-if="consumeList.length > 0">
+	        	<mt-cell  v-for="item in consumeList" :title="item.consumeType | consumeTitle" 
+	        :label="item.updateTime" :value="item.consumeMoney+'元'"></mt-cell>
+	        </div>
+	        <div v-else><p class="tip">暂无记录</p></div>
 	      </mt-tab-container-item>
 	    </mt-tab-container>
     </div>
@@ -24,6 +31,7 @@
 <script>
 import menuNav from '../common/menu.vue'
 import {getCookie} from 'util/utils.js'
+import '../../filter/index.js';
 import API from './api.js'
 export default {
 	data() {
@@ -33,10 +41,16 @@ export default {
 			consumeList: [], //消费记录
 		}
 	},
-
+	mounted() {
+		this.init();
+	},
 	methods: {
 		init() {
 			let userName = getCookie('userName');
+			if (userName == null) {
+				this.$router.replace('/login');
+				return ;
+			}
 			this.getRechargeList(userName);
 			this.getConsumeList(userName);
 		},
@@ -46,6 +60,16 @@ export default {
 				userName: name,
 				type: 1
 			};
+			API.getRechargeList(param)
+			.then(response => {
+				let res = response.body;
+				if (res.code == 0) {
+					this.rechargeList = res.list;
+					// console.log(this.rechargeList);
+				} else {
+					console.log(res.message);
+				}
+			})
 		},
 		// 获取消费记录
 		getConsumeList(name) {
@@ -53,6 +77,17 @@ export default {
 				userName: name,
 				type: 0
 			};
+			API.getConsumeList(param)
+			.then(response => {
+				let res =response.body;
+				if (res.code == 0) {
+					this.consumeList = res.list;
+					// console.log(this.consumeList);
+				} else {
+					console.log(res.message);
+				}
+
+			})
 		}
 	},
 	components: {
@@ -72,6 +107,18 @@ export default {
 	}
 	.mint-cell {
 		margin: 0 12px;
+	}
+	.tip {
+		text-align: center
+	}
+	.mint-cell-label {
+		font-size: 14px;
+	}
+	.mint-cell {
+		min-height: 68px;
+	}
+	.mint-cell-value {
+		font-weight: bold;
 	}
 }
 </style>

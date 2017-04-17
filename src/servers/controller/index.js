@@ -20,7 +20,7 @@ const controller = {
 	//login
 	login: async(req, res) => {
 		// 获取用户的ip
-		let userIp = req.connection.remoteAddress;
+		let userIp = req.body.userIp;
 		let isExits = await proxyFindObject.getUserByUserPassword(req.body),
 			result = {};
 
@@ -80,6 +80,7 @@ const controller = {
 				'phoneNumber': req.body.phoneNumber,
 				'passWord': req.body.passWord,
 				'userType': req.body.type,
+				'accountBalance': 0
 			});
 		let isExitsPhone = await proxyFindObject.getUserByPhone(req.body.phoneNumber),
 			isExitsUser = await proxyFindObject.getUserByUserName(req.body.userName);
@@ -118,15 +119,36 @@ const controller = {
 			})
 			}
 		}
-
 	},
-	getUserByUserName: async(req, res) => {
-		let isExits, result,
+	// 获取充值消费详情
+	getRechargeMoney: async(req, res) => {
+		let isExits, result, list = [],
 			param = req.body;
 		isExits = await proxyFindObject.getUserByUserName(param.userName);
+		console.log(isExits);
 		if (isExits) {
-
-		} else {
+			if (param.type == '0') {
+				isExits.expensesRecord.forEach((item) => {
+					if (item.consumeType == '0') {
+						list.push(item);
+					}
+				});
+			} else if (param.type == '1') {
+				isExits.expensesRecord.forEach((item) => {
+					if (item.consumeType == '1') {
+						list.push(item);
+					}
+				})
+			}
+			console.log(list)
+			result = {
+				'code': 0,
+				'status': 'success',
+				'message': 'success',
+				'list': list
+			};
+			res.json(result);
+		} else {	
 			result = {
 				'code': 9999,
 				'status': 'failed',
@@ -135,7 +157,148 @@ const controller = {
 			res.json(result);
 		}
 	},
+	//充值
+	addRechargeMoney: async(req, res) => {
+		let isExits, 
+			result = {}, 
+			param = {};
+		param = req.body;
+		param.updateTime = util.format(new Date(), 'yyyy-MM-dd hh-mm-ss');
 
+		isExits = await proxyFindObject.getUserByUserName(param.userName);
+
+		let accountBalance = Number(isExits.accountBalance) + Number(req.body.consumeMoney),
+			updateBalanceParam = {
+				userName: req.body.userName,
+				accountBalance: accountBalance
+			};
+
+		let isSetAccountBalance = await proxyFindObject.setAccountBalance(updateBalanceParam);
+		if (isSetAccountBalance) {
+			let isAddRechargeMoney = await proxyFindObject.addRechargeMoney(param);
+			if (isAddRechargeMoney) {
+				result = {
+					'code': 0,
+					'status': 'success',
+					'message': 'success'
+				};
+			} else {
+				result = {
+					'code': 9999,
+					'status': 'failed',
+					'message': '添加纪录出错'
+				};
+			}
+
+		} else {
+			result = {
+				'code': 9999,
+				'status': 'failed',
+				'message': '更新余额出错'
+			};
+		}
+		res.json(result);
+	},
+	// 获取用户信息
+	getUserMessage: async(req, res) => {
+		let isExits, result;
+		isExits = await proxyFindObject.getUserByUserName(req.body.userName);
+		console.log(isExits.userName, isExits.accountBalance)
+		if (isExits) {
+			result = {
+				'code': 0,
+				'status': 'success',
+				'message': 'success',
+				'data': {
+					'userName': isExits.userName,
+					'accountBalance': isExits.accountBalance,
+					'userType': isExits.userType
+				}
+			};
+		} else {
+			result = {
+				'code': 999,
+				'status': 'failed',
+				'message': 'user message is error',
+			}
+		}
+		res.json(result);
+	},
+	// 付款
+	payForMoney: async(req, res) => {
+		let payMoneyTime = util.format(new Date(), 'yyyy-MM-dd hh-mm-ss'),
+			param,
+			result = {};
+		param = req.body;
+		console.log(param);
+		param.updateTime = payMoneyTime;
+		let isExits = await proxyFindObject.getUserByUserName(param.userName);
+
+		let accountBalance = Number(isExits.accountBalance) - Number(param.consumeMoney),
+			updateBalanceParam = {
+				userName: param.userName,
+				accountBalance: accountBalance
+			};
+
+		let isSetAccountBalance = await proxyFindObject.setAccountBalance(updateBalanceParam);
+		if (isSetAccountBalance) {
+			let isAddRechargeMoney = await proxyFindObject.addRechargeMoney(param);
+			if (isAddRechargeMoney) {
+				result = {
+					'code': 0,
+					'status': 'success',
+					'message': 'success'
+				};
+			} else {
+				result = {
+					'code': 9999,
+					'status': 'failed',
+					'message': '添加纪录出错'
+				};
+			}
+
+		} else {
+			result = {
+				'code': 9999,
+				'status': 'failed',
+				'message': '更新余额出错'
+			};
+		}
+		res.json(result);
+	},
+	// 获取校车司机列表
+	getDriverIp: async(req, res) => {
+		let result = {},
+			list = [],
+			isExits = await proxyFindObject.getDriverIp(req.body);
+		if (isExits) {
+			isExits.forEach((item, index) => {
+				list.push({
+					key: 'bus' + index,
+					userIp: item.userIp
+				});
+			});
+			result = {
+				code: 0,
+				status: 'success',
+				message: 'success',
+				list: list
+			}
+		} else {
+			result = {
+				code: 9999,
+				status: 'failed',
+				message: '查询失败'
+			}
+		}
+		res.json(result);
+	},
+	logout: async(req, res) => {
+
+	},
+	upload: async(req, res) => {
+		
+	}
 }
 
 module.exports = controller

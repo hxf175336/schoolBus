@@ -95,8 +95,9 @@ export default {
         this.popupVisible = true;
         return ;
       }
-      this.param.passWord = hex_md5(this.param.passWord);
-      API.siginUp(this.param)
+      let param = this.param;
+      param.passWord = hex_md5(this.param.passWord);
+      API.siginUp(param)
       .then((response) => {
         let res = response.body;
         if (res.code == 0) {

@@ -19,5 +19,46 @@ exports.getUserByUserPassword = async(param) => {
 		'passWord': param.passWord 
 	})
 }
-
-
+// 添加消费记录
+exports.addRechargeMoney = async(param) => {
+	return await SchoolBus.update({
+		'userName': param.userName
+	}, {
+		$push: {
+			expensesRecord: {
+				updateTime: param.updateTime,
+				consumeType: param.type,
+				consumeMoney: param.consumeMoney
+			}
+		},
+	})
+}
+// 修改余额
+exports.setAccountBalance = async(param) => {
+	return await SchoolBus.update({
+		'userName': param.userName
+	}, {
+		$set: {
+			accountBalance: param.accountBalance
+		}
+	})
+}
+//删除消费记录
+exports.deleteRechargeMoney = async(param) => {
+	return await SchoolBus.update({
+		'userName': param.userName
+	}, {
+		$pull: {
+			expensesRecord: {
+				updateTime: param.updateTime
+			}
+		}
+	})
+}
+// 查询司机的ip
+exports.getDriverIp = async(param) => {
+	return await SchoolBus.find({
+		'userType': param.userType,
+		'isOnline': true
+	})
+}

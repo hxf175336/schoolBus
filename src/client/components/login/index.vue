@@ -28,9 +28,13 @@ export default {
       errorTip: '',
       param: {
         userName: '',
+        userIp: '',
         passWord: '',
       }
     }
+  },
+  beforeMount() {
+    this.getUserIp();
   },
   // 错误提示
   watch: {
@@ -44,8 +48,9 @@ export default {
   },
   methods: {
     submit() {
-      this.param.passWord = hex_md5(this.param.passWord);
-      API.login(this.param)
+      let param = this.param;
+       param.passWord = hex_md5(this.param.passWord);
+      API.login(param)
       .then(response => {
         let res = response.body;
         if (res.code == 0) {
@@ -64,8 +69,16 @@ export default {
     reset() {
       this.param = {
         userName: '',
-        passWord: ''
+        passWord: ''  
       }
+    },
+    
+    getUserIp() {
+      this.$http.jsonp('http://chaxun.1616.net/s.php?type=ip&output=json&callback=?&_='+Math.random())
+      .then((response) => {
+        let res = response.body;
+        this.param.userIp = res.Ip;
+      })
     }
   }
 }
