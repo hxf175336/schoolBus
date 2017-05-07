@@ -1,11 +1,14 @@
 const mongoose = require('mongoose');
 const SchoolBus = require('../model/schema.js');
-const util = require('../util/utils.js')
+const Article = require('../model/article.js');
+const utils = require('../util/utils.js');
+const upload = require('../util/upload.js')
 
-const proxyFindObject = require('../proxy');
+const proxy = require('../proxy');
 
 // 链接数据库
 mongoose.connect("mongodb://127.0.0.1:27017/schoolBus");
+
 // 创建数据集合
 
 const db = mongoose.connection;
@@ -21,7 +24,7 @@ const controller = {
 	login: async(req, res) => {
 		// 获取用户的ip
 		let userIp = req.body.userIp;
-		let isExits = await proxyFindObject.getUserByUserPassword(req.body),
+		let isExits = await proxy.getUserByUserPassword(req.body),
 			result = {};
 
 		console.log('----'+isExits);
@@ -73,7 +76,7 @@ const controller = {
 	
 	//注册
 	setUserMessage: async(req, res) => {
-		let registTime = util.format(new Date(), 'yyyy-MM-dd hh-mm-ss'),
+		let registTime = utils.format(new Date(), 'yyyy-MM-dd hh-mm-ss'),
 			setUser = new SchoolBus({
 				'userName': req.body.userName,
 				'registTime': registTime,
@@ -82,8 +85,8 @@ const controller = {
 				'userType': req.body.type,
 				'accountBalance': 0
 			});
-		let isExitsPhone = await proxyFindObject.getUserByPhone(req.body.phoneNumber),
-			isExitsUser = await proxyFindObject.getUserByUserName(req.body.userName);
+		let isExitsPhone = await proxy.getUserByPhone(req.body.phoneNumber),
+			isExitsUser = await proxy.getUserByUserName(req.body.userName);
 		if (isExitsPhone != null) {
 			result = {
 				'code': 9999,
@@ -124,7 +127,7 @@ const controller = {
 	getRechargeMoney: async(req, res) => {
 		let isExits, result, list = [],
 			param = req.body;
-		isExits = await proxyFindObject.getUserByUserName(param.userName);
+		isExits = await proxy.getUserByUserName(param.userName);
 		console.log(isExits);
 		if (isExits) {
 			if (param.type == '0') {
@@ -163,9 +166,9 @@ const controller = {
 			result = {}, 
 			param = {};
 		param = req.body;
-		param.updateTime = util.format(new Date(), 'yyyy-MM-dd hh-mm-ss');
+		param.updateTime = utils.format(new Date(), 'yyyy-MM-dd hh-mm-ss');
 
-		isExits = await proxyFindObject.getUserByUserName(param.userName);
+		isExits = await proxy.getUserByUserName(param.userName);
 
 		let accountBalance = Number(isExits.accountBalance) + Number(req.body.consumeMoney),
 			updateBalanceParam = {
@@ -173,9 +176,9 @@ const controller = {
 				accountBalance: accountBalance
 			};
 
-		let isSetAccountBalance = await proxyFindObject.setAccountBalance(updateBalanceParam);
+		let isSetAccountBalance = await proxy.setAccountBalance(updateBalanceParam);
 		if (isSetAccountBalance) {
-			let isAddRechargeMoney = await proxyFindObject.addRechargeMoney(param);
+			let isAddRechargeMoney = await proxy.addRechargeMoney(param);
 			if (isAddRechargeMoney) {
 				result = {
 					'code': 0,
@@ -202,7 +205,7 @@ const controller = {
 	// 获取用户信息
 	getUserMessage: async(req, res) => {
 		let isExits, result;
-		isExits = await proxyFindObject.getUserByUserName(req.body.userName);
+		isExits = await proxy.getUserByUserName(req.body.userName);
 		console.log(isExits.userName, isExits.accountBalance)
 		if (isExits) {
 			result = {
@@ -212,7 +215,10 @@ const controller = {
 				'data': {
 					'userName': isExits.userName,
 					'accountBalance': isExits.accountBalance,
-					'userType': isExits.userType
+					'userType': isExits.userType,
+					'userPhone': isExits.phoneNumber,
+					'trueName': isExits.trueName,
+					'birthDay': isExits.birthDay
 				}
 			};
 		} else {
@@ -226,13 +232,13 @@ const controller = {
 	},
 	// 付款
 	payForMoney: async(req, res) => {
-		let payMoneyTime = util.format(new Date(), 'yyyy-MM-dd hh-mm-ss'),
+		let payMoneyTime = utils.format(new Date(), 'yyyy-MM-dd hh-mm-ss'),
 			param,
 			result = {};
 		param = req.body;
 		console.log(param);
 		param.updateTime = payMoneyTime;
-		let isExits = await proxyFindObject.getUserByUserName(param.userName);
+		let isExits = await proxy.getUserByUserName(param.userName);
 
 		let accountBalance = Number(isExits.accountBalance) - Number(param.consumeMoney),
 			updateBalanceParam = {
@@ -240,9 +246,9 @@ const controller = {
 				accountBalance: accountBalance
 			};
 
-		let isSetAccountBalance = await proxyFindObject.setAccountBalance(updateBalanceParam);
+		let isSetAccountBalance = await proxy.setAccountBalance(updateBalanceParam);
 		if (isSetAccountBalance) {
-			let isAddRechargeMoney = await proxyFindObject.addRechargeMoney(param);
+			let isAddRechargeMoney = await proxy.addRechargeMoney(param);
 			if (isAddRechargeMoney) {
 				result = {
 					'code': 0,
@@ -270,7 +276,7 @@ const controller = {
 	getDriverIp: async(req, res) => {
 		let result = {},
 			list = [],
-			isExits = await proxyFindObject.getDriverIp(req.body);
+			isExits = await proxy.getDriverIp(req.body);
 		if (isExits) {
 			isExits.forEach((item, index) => {
 				list.push({
@@ -294,10 +300,243 @@ const controller = {
 		res.json(result);
 	},
 	logout: async(req, res) => {
-
+		let result = {};
+		res.clearCookie('userName');
+		SchoolBus.update({
+			userName: req.user,
+		}, {
+			isOnline: false
+		}, 
+		(err) => {
+			if (err) {
+				result = {
+					code: 9999,
+					status: 'failed',
+					message: 'failed',
+				}
+			} else {
+				result = {
+					code: 0,
+					status: 'success',
+					message: 'success',
+				}
+			}
+			res.json(result);
+		})
 	},
 	upload: async(req, res) => {
+		upload.upload(req, res);
+	},
+	adminlogin: async(req, res) => {
+		//param： {type userName password}
+
+		let isExits = await proxy.adminlogin(req.body),
+			result = {};
+		if (isExits) {
+
+			res.cookie('userType', isExits.userType, {
+			    expires: new Date(Date.now() + 2592000000),
+				httpOnly: false
+			});
+			result = {
+				'code': 0,
+				'status': 'success',
+				'message': 'success',
+			};
+		} else {
+			result = {
+				'code': 9999,
+				'status': 'failed',
+				'message': 'failed',
+			};
+		}
+		res.json(result);
+	},
+	getActive: async(req, res) => {
+		let param = {},
+			result = {},
+			isTrue,
+			list = [];
+		param = {
+			skip: req.body.page * req.body.pageSize,
+			pageSize: 10,
+		};
+		isTrue = await proxy.findArticle(param);
+		console.log(isTrue);
+		if (isTrue) {
+			list = isTrue;
+			result = {
+				code: 0,
+				status: 'success',
+				message: 'success',
+				list: list
+			}
+		} else {
+			result = {
+				code: 9999,
+				status: 'failed',
+				message: 'failed',
+			}
+		}
+		res.json(result);
+	},
+	getOneArticle: async(req, res) => {
+		let result =  {};
+		let isTrue = await proxy.findOneArticle(req.body);
+		console.log(isTrue);
 		
+		if (isTrue) {
+			result = {
+				'code': 0,
+				'status': 'success',
+				'message': 'success',
+				'list': isTrue
+			};
+		} else {
+			result = {
+				'code': 9999,
+				'status': 'failed',
+				'message': 'failed',
+			};
+		}
+		res.json(result);
+	},
+	setTrueName: async(req, res) => {
+		let result = {},
+			isOk;
+		isOk = await proxy.setTrueName(req.body);
+		if (isOk) {
+			result = {
+				'code': 0,
+				'status': 'success',
+				'message': 'success',
+				'list': isOk
+			};
+		} else {
+			result = {
+				'code': 9999,
+				'status': 'failed',
+				'message': 'failed',
+			};
+		}
+		res.json(result);
+	},
+	setBirthDay: async(req, res) => {
+		let result = {},
+			isOk;
+		isOk = await proxy.setBirthDay(req.body);
+		if (isOk) {
+			result = {
+				'code': 0,
+				'status': 'success',
+				'message': 'success',
+				'list': isOk
+			};
+		} else {
+			result = {
+				'code': 9999,
+				'status': 'failed',
+				'message': 'failed',
+			};
+		}
+		res.json(result);
+	},
+	setIslike: async(req, res) => {
+		let result = {},
+			param = {};
+		param = req.body;
+		// like: 1, articleId
+		let getIslike = await proxy.getIslike(param.articleId);
+		if (getIslike) {
+			param.islike = getIslike.islike + param.like;
+			let isSetOk = await proxy.setIslike(param);
+			console.log('set islike' + isSetOk.islike);
+			if (isSetOk) {
+				result = {
+					'code': 0,
+					'status': 'success',
+					'message': 'success',
+				}
+
+			} else {
+
+				result = {
+					'code': 9999,
+					'status': 'failed',
+					'message': '写入点赞数失败',
+				}
+			}
+		} else {
+			result = {
+				'code': 9999,
+				'status': 'failed',
+				'message': '获取点赞数失败',
+			}
+		}
+		res.json(result);
+	},
+	setMessage: async(req, res) => {
+		let param = {},
+			result = {},
+			time = new Date();
+			param = req.body;
+			param.createTime = time.getTime();
+			
+		let isSetMess = await proxy.setMessage(param);
+		if (isSetMess) {
+			result = {
+				'code': 0,
+				'status': 'success',
+				'message': 'success',
+			}
+		} else {
+			result = {
+				'code': 9999,
+				'status': 'failed',
+				'message': '获取点赞数失败',
+			}
+		}
+		res.json(result);
+	},
+	modifyPhone: async(req, res) => {
+		let result = {},
+			isOk;
+		isOk = await proxy.modifyPhone(req.body);
+		if (isOk) {
+			result = {
+				'code': 0,
+				'status': 'success',
+				'message': 'success',
+				'list': isOk
+			};
+		} else {
+			result = {
+				'code': 9999,
+				'status': 'failed',
+				'message': 'failed',
+			};
+		}
+		res.json(result);
+	},
+	modifyUserName: async(req, res) => {
+		let result = {},
+			isOk;
+		isOk = await proxy.modifyUserName(req.body);
+		if (isOk) {
+			result = {
+				'code': 0,
+				'status': 'success',
+				'message': 'success',
+				'list': isOk
+			};
+		} else {
+			result = {
+				'code': 9999,
+				'status': 'failed',
+				'message': 'failed',
+			};
+		}
+		res.json(result);
 	}
 }
 

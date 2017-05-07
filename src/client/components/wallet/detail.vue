@@ -1,6 +1,7 @@
 <!-- 充值 -->
 <template>
   <div class="addMoney">
+    <p class="back" @click="back"><i class="iconfont">&#xe606;</i></p>
 	<div class="addMoneyHeader">
 		<p>我的余额(RMB)</p>
     	<p>{{accountBalance | moneyTofixed}}</p>
@@ -93,8 +94,12 @@ export default {
 			            message: '充值成功！',
 			            iconClass: 'mintui mintui-success'
 			        });
+			        this.$emit('getBalanceMoney');
 				}
 			})
+		},
+		back() {
+			this.$emit('reset');
 		}
 	}
 }
@@ -103,7 +108,10 @@ export default {
 <style lang="less">
 .addMoney {
 	margin-top: 50px;
-	
+	padding-top: 12px;
+	.back {
+		text-indent: 12px;
+	}
 	.addMoneyHeader {
 		padding: 12px;
 		text-align: center;

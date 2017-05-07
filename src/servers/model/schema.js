@@ -4,6 +4,14 @@ mongoose.Promise = global.Promise
 
 // 校车定位系统的数据集合
 const schoolBusSchema = {
+  trueName: {
+    type: String,
+    default: ''
+  },
+  birthDay: {
+    type: String,
+    default: ''
+  }, 
 	// 用户名称
 	userName: { 
 		type: String, 
@@ -29,7 +37,7 @@ const schoolBusSchema = {
   	type: Number,
   	default: 0
   },
-  // 用户类型 0: 普通用户 1： 校车司机
+  // 用户类型 0: 普通用户 1： 校车司机 2 代表发文管理员 3 管理员
   userType: {
   	type: Number,
   	default: 0

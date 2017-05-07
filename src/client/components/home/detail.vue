@@ -1,6 +1,7 @@
 <!--  -->
 <template>
   	<div class="home-detail">
+  		<p type="text" @click="back"><i class="iconfont">&#xe606;</i></p>
   		<div class="pay-banner">
   			<p class="pay-title">本次行程消费</p>
   			<div class="pay-money">
@@ -21,7 +22,6 @@
 <script>
 import API from './api.js'
 import { Toast } from 'mint-ui';
-
 export default {
 	props: {
 		userName: {
@@ -60,6 +60,9 @@ export default {
 					}, 1000)
 				}
 			})
+		},
+		back() {
+			this.$emit('reset');
 		}
 	}
 }
@@ -67,7 +70,7 @@ export default {
 
 <style lang="less">
 .home-detail {
-	padding: 18px 12px 12px 12px;
+	padding: 12px;
 	margin-top: 50px;
 	font-size: 16px;
 	.pay-banner {

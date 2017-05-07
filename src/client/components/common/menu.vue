@@ -2,8 +2,8 @@
 <template>
   <div class="menulist">
     <mt-header title="foo校园通">
-      <i slot="left" class="iconfont" @click="showLeftSlider">&#xe63d;</i>
-      <i slot="right" class="iconfont"><a href="#/activity">&#xe605;</a></i>
+      <i slot="left" class="iconfont" @click="showLeftSlider">&#xe65a;</i>
+      <i slot="right" class="iconfont"><a href="#/activity">&#xe743;</a></i>
     </mt-header>
     <div class="nav" @click="showLeftSlider" :class="{'wid': !leftSliderVisible}">
       <div class="banner">

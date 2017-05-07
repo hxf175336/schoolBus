@@ -49,7 +49,12 @@ export default {
   methods: {
     submit() {
       let param = this.param;
-       param.passWord = hex_md5(this.param.passWord);
+      if (this.param.userName == '' || this.param.password == '') {
+        this.errorTip = "用户或密码不能为空";
+        this.popupVisible = true;
+        return ;
+      }
+      param.passWord = hex_md5(this.param.passWord);
       API.login(param)
       .then(response => {
         let res = response.body;

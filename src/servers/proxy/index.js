@@ -1,4 +1,5 @@
 const SchoolBus = require('../model/schema.js');
+const Article = require('../model/article.js')
 
  /*  根据手机号查找用户信息  */
 exports.getUserByPhone = async(phone) => {
@@ -61,4 +62,97 @@ exports.getDriverIp = async(param) => {
 		'userType': param.userType,
 		'isOnline': true
 	})
+}
+// 查询司机的ip
+exports.adminlogin = async(param) => {
+	return await SchoolBus.findOne({
+		'userName': param.userName,
+		'passWord': param.passWord,
+		'userType': param.type
+	})
+}
+// 查询文章并分页
+exports.findArticle = async(param) => {
+	return await Article.find().skip(param.skip).limit(param.pageSize).sort({sendTime: -1});
+}
+// 查询文章并分页
+exports.findOneArticle = async(param) => {
+	return await Article.findOne({
+		_id: param.articleId
+	});
+}
+
+//设置真正用户名
+exports.setTrueName = async(param) => {
+	return await SchoolBus.update({
+		userName: param.userName
+	}, {
+		$set: {
+			trueName: param.trueName
+		}
+	});
+}
+
+//设置生日
+exports.setBirthDay = async(param) => {
+	return await SchoolBus.update({
+		userName: param.userName
+	}, {
+		$set: {
+			birthDay: param.birthDay
+		}
+	});
+}
+
+// 得到点赞数
+exports.getIslike = async(id) => {
+	return await Article.findOne({
+		_id: id
+	});
+}
+
+// 点赞
+exports.setIslike = async(param) => {
+	return await Article.update({
+		_id: param.articleId
+	}, {
+		$set: {
+			islike: param.islike
+		}
+	});
+}
+
+// 留言
+exports.setMessage = async(param) => {
+	return await Article.update({
+		_id: param.articleId
+	}, {
+		$push: {
+			message: {
+				createTime: param.createTime,
+				messageText: param.messageText,
+				byWho: param.byWho
+			}
+		},
+	})
+}
+
+exports.modifyPhone = async(param) => {
+	return await SchoolBus.update({
+		userName: param.userName
+	}, {
+		$set: {
+			phoneNumber: param.newPhone
+		}
+	});
+}
+
+exports.modifyUserName = async(param) => {
+	return await SchoolBus.update({
+		userName: param.userName
+	}, {
+		$set: {
+			userName: param.newUserName
+		}
+	});
 }

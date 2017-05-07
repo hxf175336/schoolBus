@@ -4,13 +4,11 @@
     <div v-if="!detail" class="account-balance">
     	<p>我的余额(RMB)</p>
     	<p>{{accountBalance | moneyTofixed}}</p>
-    	<a href="/#/recording">
-    		<div>查看交易明细</div>
-    	</a>
+    	<a href="/#/recording">查看交易明细</a>
     	<mt-button type="primary" @click="switchDetail">充值</mt-button>
     </div>
 	<div v-else>
-		<detail :account-balance="accountBalance"></detail>
+		<detail @reset="reset" :account-balance="accountBalance" @getBalanceMoney="getBalanceMoney"></detail>
 	</div>
   </div>
 
@@ -60,6 +58,9 @@ export default {
 				let res = response.body;
 				this.accountBalance = res.data.accountBalance;
 			})
+		},
+		reset() {
+			this.detail = false;
 		}
 	},
 	components: {

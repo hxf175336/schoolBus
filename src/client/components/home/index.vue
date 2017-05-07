@@ -1,19 +1,26 @@
 <template>
   <div class="home">
     <menuNav></menuNav>
-    <div class="main" v-if="!isdetail">
-      <baidu-map class="vue-map" :center="center" :min-zoom="17" >
+    <div class="map-main" v-if="!isdetail">
+      <baidu-map class="vue-map" :center="center" :min-zoom="18" >
         <bm-scale anchor="BMAP_ANCHOR_TOP_RIGHT"/>
         <bm-navigation anchor="BMAP_ANCHOR_TOP_RIGHT"/>
         <bm-geolocation anchor="BMAP_ANCHOR_BOTTOM_RIGHT" :autoLocation="true" />
-        <bm-marker v-for="item in theSchoolBusListMap" 
-          :position="item" 
-          :dragging="true" 
+        <bm-marker v-if="theSchoolBusListMap"
+          :position="theSchoolBusListMap" 
+          :dragging="false" 
           animation="BMAP_ANIMATION_BOUNCE" 
-          :label="{content: 'Marker Label', 
+          :label="{content: '校车', 
           opts: {offset: {width: 20, height: -10}}}">
-          
         </bm-marker>
+        <bm-marker v-if="positionList" v-for="item in positionList"
+          :position="item" 
+          :dragging="false" 
+          animation="BMAP_ANIMATION_BOUNCE" 
+          :label="{content: '校车停靠点', 
+          opts: {offset: {width: 20, height: -10}}}">
+        </bm-marker>
+        
       </baidu-map>
     <div class="search-recent-bus" v-if="btnVisible" @click.nactive="showBus()">
       <div class="search-bus-box">
@@ -40,7 +47,7 @@ import { Indicator } from 'mint-ui'
 import detail from './detail.vue'
 import {getCookie} from 'util/utils.js'
 import API from './api.js'
-
+import position from '../../config/position.js'
 export default {
   data () {
     return{
@@ -49,12 +56,16 @@ export default {
       isdetail: false,
       payBtnVisible: false,
       userName: '',
+      positionList: [],
       theSchoolBusList: [],
-      theSchoolBusListMap: [],
-      center: {
+      theSchoolBusListMap: {
         lng: '',
         lat: ''
       },
+      center: {
+        lng: '',
+        lat: ''
+      }
     }
   },
 
@@ -65,6 +76,7 @@ export default {
     init() {
       this.cookie();
       this.getLocation();
+      
     },
     // 获取cookie
     cookie() {
@@ -85,7 +97,7 @@ export default {
       // let that = this;
       // if (navigator.geolocation) {
       //   navigator.geolocation.watchPosition((position) => {
-      //     Indicator.close();
+      //     Indicator.close();  
       //     that.btnVisible = true;
       //     console.log(position);
       //     that.center = {
@@ -107,6 +119,7 @@ export default {
             lng: r.longitude,
             lat: r.latitude
           }
+          console.log(that.center)
     		}
     		else {
     			alert('failed'+this.getStatus());
@@ -119,9 +132,10 @@ export default {
     },
     // 显示校车
     showBus() {
-      // this.payBtnVisible = true;
+      this.payBtnVisible = true;
+      this.btnVisible = false;
+      this.positionList = position.position;
       // 获取校车司机的ip
-      // this.getSchoolBusDriverIp();
       API.getDriverIp({
         userType: '1'
       }).then(response => {
@@ -133,31 +147,36 @@ export default {
             that.$http.jsonp('http://api.map.baidu.com/location/ip?ak=4b04053e2f36b919f23fe04a9b2959e3&coor=bd09ll&ip='+ item.userIp)
             .then(response => {
                 let res = response.body;
-                map.push({
-                  lng: res.content.point.x,
-                  lat: res.content.point.y
+                
+                let point = new BMap.Point(res.content.point.x, res.content.point.y);
+                console.log(point);
+                let translateCallback = (data) => {
+                  if(data.status === 0) {
+                    var marker = new BMap.Marker(data.points[0]);
+                    let theDriver = {
+                      lng: marker.point.lng + 0.06918,
+                      lat: marker.point.lat - 0.0962790
+                    }
+
+                    that.theSchoolBusListMap = JSON.parse(JSON.stringify(theDriver  ));
+                    console.log(that.theSchoolBusListMap);
+                  }
+                }
+                setTimeout(function(){
+                  var convertor = new BMap.Convertor();
+                  var pointArr = [];
+                  pointArr.push(point);
+                  convertor.translate(pointArr, 1, 5, translateCallback)
                 });
-                console.log('---', map);
+                
             }, response => {
                 console.log(response);
             })
         });
       })
      
-      
-      this.theSchoolBusListMap = map;
-      // this.btnVisible = false;
     },
-    // // 获取校车司机ip
-    // getSchoolBusDriverIp() {
-    //   API.getDriverIp({
-    //     userType: '1'
-    //   }).then(response => {
-    //     this.flag = true;
-    //     let res = response.body;
-    //     this.theSchoolBusList = res.list
-    //   })
-    // },
+    
     reset() {
       this.btnVisible = true;
       this.isdetail = false;
@@ -174,7 +193,7 @@ export default {
 .home {
   
   height: 100%;
-  .main {
+  .map-main {
     height: 100%;
     .vue-map {
     top:50px;

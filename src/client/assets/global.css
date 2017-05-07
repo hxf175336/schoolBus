@@ -9,3 +9,8 @@ body {
 input:-webkit-autofill {
 	background: #fff;
 }
+.mint-msgbox-input input {
+	margin-left: 8%;
+    width: 80% !important;
+    height: 24px;
+}
